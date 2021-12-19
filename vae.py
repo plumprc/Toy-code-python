@@ -6,7 +6,8 @@ from torchvision import transforms
 from torchvision.utils import save_image
 
 batch = 128
-epochs = 40
+epochs = 30
+device = torch.device('cuda:2')
 dataset = datasets.MNIST(root='datasets', train=True, transform=transforms.ToTensor(), download=False)
 data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True)
 
@@ -27,20 +28,23 @@ class VAE(nn.Module):
         )
     
     def reparameterize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        esp = torch.randn(*mu.size())
+        std = logvar.mul(0.5).exp_().to(device)
+        esp = torch.randn(*mu.size()).to(device)
         z = mu + std * esp
         return z
     
     def forward(self, x):
+        # x: [batch, 1, 28, 28]
         h = self.encoder(x)
+        # encoder: [batch, 40]
         mu, logvar = torch.chunk(h, 2, dim=1)
+        # paras, z: [batch, 20]
         z = self.reparameterize(mu, logvar)
         return self.decoder(z), mu, logvar
 
 
 def loss_fn(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy(recon_x, x, size_average=False)
+    BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
 
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
@@ -48,15 +52,13 @@ def loss_fn(recon_x, x, mu, logvar):
     KLD = -0.5 * torch.sum(1 + logvar - mu**2 -  logvar.exp())
     return BCE + KLD
 
-def flatten(x):
-    return x.view(x.size(0), -1)
-
 if __name__ == '__main__':
-    vae = VAE()
+    vae = VAE().to(device)
     optimizer = torch.optim.Adam(vae.parameters(), lr=1e-3)
     for epoch in range(epochs):
         for idx, (images, _) in enumerate(data_loader):
-            images = flatten(images)
+            images = images.to(device)
+            images = images.view(images.size(0), -1)
             recon_images, mu, logvar = vae(images)
             loss = loss_fn(recon_images, images, mu, logvar)
 
@@ -67,6 +69,7 @@ if __name__ == '__main__':
             if idx % 100 == 0:
                 print("Epoch[{}/{}] Loss: {:.3f}".format(epoch + 1, epochs, loss.item() / batch))
 
-    sample = torch.randn(128, 20)
+    # torch.save(vae, 'vae.pth')
+    sample = torch.randn(128, 20).to(device)
     recon_x = vae.decoder(sample)
     save_image(recon_x.view(recon_x.size(0), 1, 28, 28).data.cpu(), 'sample.png')
