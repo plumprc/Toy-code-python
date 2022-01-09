@@ -1,4 +1,6 @@
 import json
+import re
+import datetime
 
 class Rank():
     def __init__(self, file_name):
@@ -16,11 +18,13 @@ class Rank():
 
     def get_time_seq(self):
         dic = {str(i).zfill(2):0 for i in range(24)}
+        date = set()
         for item in self.data:
             dic[item['date'][0][11:13]] += 1
+            date.add(item['date'][0][5:10])
         
         # dic = sorted(dic.items(), key=lambda x:x[1], reverse=True)
-        return dic
+        return dic, len(date)
 
     def get_calen_flow(self):
         dic = {}
@@ -31,6 +35,69 @@ class Rank():
         
         return dic
 
+    def get_date_act(self):
+        dic = {}
+        for item in self.data:
+            if item['date'][0][5:10] not in dic:
+                dic[item['date'][0][5:10]] = set()
+                dic[item['date'][0][5:10]].add(item['uid'])
+            else: dic[item['date'][0][5:10]].add(item['uid'])
+        
+        for k, v in dic.items():
+            dic[k] = len(v)
+        return dic
+
     def get_meme_freq(self):
         dic = {}
+        for item in self.data:
+            text = item['reply']
+            for con in text:
+                r = re.findall(r"\[s:\S*?\]", con)
+                for meme in r:
+                    if meme not in dic:
+                        dic[meme] = 1
+                    else: dic[meme] += 1
+        
+        dic = sorted(dic.items(), key=lambda x:x[1], reverse=True)
         return dic
+
+    def get_meme_uid(self, meme):
+        dic = {}
+        for item in self.data:
+            text = item['reply']
+            for con in text:
+                r = re.findall(meme, con)
+                if len(r) != 0:
+                    if item['uid'] not in dic:
+                        dic[item['uid']] = len(r)
+                    else: dic[item['uid']] += len(r)
+        
+        dic = sorted(dic.items(), key=lambda x:x[1], reverse=True)
+        return dic
+
+    def get_match_reply(self, match):
+        for item in self.data:
+            text = item['reply']
+            for con in text:
+                r = re.findall(match, con)
+                if len(r) != 0:
+                    with open(str(match) + '.txt', 'a+', encoding='utf-8') as f:
+                        f.write(str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+
+        return 1
+
+    def get_uid_reply(self, uid):
+        for item in self.data:
+            if uid == str(item['uid']):
+                text = item['reply']
+                for con in text:
+                    with open(str(uid) + '.txt', 'a+', encoding='utf-8') as f:
+                        f.write(str(item['date']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+        
+        return 1
+
+    def get_live(self):
+        d1 = datetime.datetime.strptime(self.data[1]['date'][0], '%Y-%m-%d %H:%M')
+        d2 = datetime.datetime.strptime(self.data[-1]['date'][0], '%Y-%m-%d %H:%M')
+        print(d1, d2)
+        return d2 - d1
