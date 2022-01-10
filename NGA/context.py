@@ -27,11 +27,16 @@ def generate_context(filename: str):
             if len(r) != 0:
                 for con in r:
                     s = s.replace(con, '')
-            
+            r = re.findall(r'\[b\][\s\S]+?\[\/b', s)
+            if len(r) != 0:
+                for con in r:
+                    s = s.replace(con, '')
+
             s = s.replace('[del]', '')
             s = s.replace('[/del]', '')
             s = s.replace('[color]', '')
             s = s.replace('[/color]', '')
+            s = s.replace('[collapse]', '')
             s = s.replace('[/collapse]', '')
 
             with open(filename + '.txt', 'a+', encoding='utf-8') as f:
@@ -63,11 +68,16 @@ def generate_context_by_uid(filename: str, uid):
                 if len(r) != 0:
                     for con in r:
                         s = s.replace(con, '')
+                r = re.findall(r'\[b\][\s\S]+?\[\/b', s)
+                if len(r) != 0:
+                    for con in r:
+                        s = s.replace(con, '')
 
                 s = s.replace('[del]', '')
                 s = s.replace('[/del]', '')
                 s = s.replace('[color]', '')
                 s = s.replace('[/color]', '')
+                s = s.replace('[collapse]', '')
                 s = s.replace('[/collapse]', '')
 
                 with open(str(uid) + '.txt', 'a+', encoding='utf-8') as f:

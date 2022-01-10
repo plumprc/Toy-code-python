@@ -49,6 +49,7 @@ def clean_reply(filename: str):
                     uid = re.findall(r'\[uid=-?\d+\]', con)
                     if len(uid) != 0:
                         s = s.replace(con, 'rep' + uid[0][1:-1] + ' ')
+            
             reply['reply'][idx] = s
     
     with open(filename + '.json', 'w', encoding='utf-8') as f:
