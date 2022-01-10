@@ -87,6 +87,7 @@ def generate_context(filename: str):
             s = s.replace('[collapse]', '')
             s = s.replace('[/collapse]', '')
             s = s.replace('[/url]', '')
+            s = s.replace('[/dice]', '')
 
             with open(filename + '.txt', 'a+', encoding='utf-8') as f:
                 f.write(s + '\n')
@@ -133,6 +134,7 @@ def generate_context_by_uid(filename: str, uid):
                 s = s.replace('[collapse]', '')
                 s = s.replace('[/collapse]', '')
                 s = s.replace('[/url]', '')
+                s = s.replace('[/dice]', '')
 
                 with open(str(uid) + '.txt', 'a+', encoding='utf-8') as f:
                     f.write(s + '\n')

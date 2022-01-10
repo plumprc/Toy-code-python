@@ -137,7 +137,7 @@ class Rank():
                     flag = True
                     for con in text:
                         with open('ipt.txt', 'a+', encoding='utf-8') as f:
-                            f.write(str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+                            f.write(str(item['uid']) + ' #' + str(item['floor']) + ' [同传]\n' + con + '\n')
                     
                 if flag == True:
                     continue
@@ -145,6 +145,6 @@ class Rank():
                 r = re.findall("\“[\s\S]+?\”", con)
                 if len(r) != 0:
                     with open('ipt.txt', 'a+', encoding='utf-8') as f:
-                        f.write('no_quote\n' + str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n=========\n')
+                        f.write(str(item['uid']) + ' #' + str(item['floor']) + ' no_quote\n' + con + '\n=========\n')
         
         return 1
