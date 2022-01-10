@@ -63,6 +63,10 @@ def generate_context(filename: str):
             if len(r) != 0:
                 for con in r:
                     s = s.replace(con, '')
+            r = re.findall(r'\[color=\S+?\]', s)
+            if len(r) != 0:
+                for con in r:
+                    s = s.replace(con, '')
             r = re.findall(r'\[img\S+?\/img\]', s)
             if len(r) != 0:
                 for con in r:
@@ -102,6 +106,10 @@ def generate_context_by_uid(filename: str, uid):
                     for con in r:
                         s = s.replace(con, '')
                 r = re.findall(r'\[collapse=\S+?\]', s)
+                if len(r) != 0:
+                    for con in r:
+                        s = s.replace(con, '')
+                r = re.findall(r'\[color=\S+?\]', s)
                 if len(r) != 0:
                     for con in r:
                         s = s.replace(con, '')

@@ -101,3 +101,50 @@ class Rank():
         d2 = datetime.datetime.strptime(self.data[-1]['date'][0], '%Y-%m-%d %H:%M')
         print(d1, d2)
         return d2 - d1
+
+    def get_new_user(self):
+        dic = {}
+        total = set()
+        for item in self.data:
+            if item['uid'] not in total:
+                total.add(item['uid'])
+                if item['date'][0][5:10] not in dic:
+                    dic[item['date'][0][5:10]] = set()
+                    dic[item['date'][0][5:10]].add(item['uid'])
+                else: dic[item['date'][0][5:10]].add(item['uid'])
+            else: continue
+        
+        del(total)
+        for k, v in dic.items():
+            dic[k] = len(v)
+        return dic
+
+    def get_locate(self, loc):
+        for item in self.data:
+            if loc == item['date'][0][5:10]:
+                print(item['floor'])
+                break
+
+        return 1
+
+    def get_ipt(self):
+        for item in self.data:
+            text = item['reply']
+            flag = False
+            for con in text:
+                r = re.findall("\[同传\]", con)
+                if len(r) != 0:
+                    flag = True
+                    for con in text:
+                        with open('ipt.txt', 'a+', encoding='utf-8') as f:
+                            f.write(str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+                    
+                if flag == True:
+                    continue
+                
+                r = re.findall("\“[\s\S]+?\”", con)
+                if len(r) != 0:
+                    with open('ipt.txt', 'a+', encoding='utf-8') as f:
+                        f.write('no_quote\n' + str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n=========\n')
+        
+        return 1

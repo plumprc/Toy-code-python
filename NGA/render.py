@@ -141,12 +141,15 @@ def calen_flow():
     )
     return line
 
-def date_act():
-    dic = Rank('statistics/HB.json').get_date_act()
+def date_act(f=0):
+    if f == 0:
+        dic = Rank('statistics/HB.json').get_date_act()
+    else: dic = Rank('statistics/HB_' + str(args.f) +  '.json').get_date_act()
+
     line = (
         Line()
-        .add_xaxis(list(dic.keys())[:-1])
-        .add_yaxis("日活跃", list(dic.values())[:-1], linestyle_opts=opts.LineStyleOpts(width=2), is_smooth=True, label_opts=opts.LabelOpts(is_show=False), markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]))
+        .add_xaxis(list(dic.keys())[1:-1])
+        .add_yaxis("日活跃", list(dic.values())[1:-1], linestyle_opts=opts.LineStyleOpts(width=2), is_smooth=True, label_opts=opts.LabelOpts(is_show=False), markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]))
         .set_global_opts(
             title_opts=opts.TitleOpts(title="专楼日活跃用户"),
             yaxis_opts=opts.AxisOpts(
@@ -179,6 +182,18 @@ def uid_reply(uid, f=0):
         Rank('statistics/HB.json').get_uid_reply(uid)
     else: Rank('statistics/HB_' + str(f) + '.json').get_uid_reply(uid)
 
+def new_user(num):
+    dic = Rank('statistics/HB_' + str(num) +  '.json').get_new_user()
+    return dic
+
+def locate(loc, f=0):
+    if f == 0:
+        Rank('statistics/HB.json').get_locate(loc)
+    else: Rank('statistics/HB_' + str(f) + '.json').get_locate(loc)
+
+def ipt(filename):
+    Rank(filename + '.json').get_ipt()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--f', type=int, default=0, help='HB_f')
@@ -192,6 +207,9 @@ if __name__ == '__main__':
     parser.add_argument('--meme_u', type=str, default='', help='meme uid')
     parser.add_argument('--match', type=str, default='', help='match text')
     parser.add_argument('--uid', type=str, default='', help='uid reply')
+    parser.add_argument('--new', type=int, default=0, help='new user')
+    parser.add_argument('--ipt', type=str, default='', help='interpretation')
+    parser.add_argument('--loc', type=str, default='', help='locate date: mm-dd')
     args = parser.parse_args()
     if args.live != 0:
         print(live(args.live))
@@ -208,7 +226,7 @@ if __name__ == '__main__':
         line = calen_flow()
         line.render("render/calen_flow.html")
     if args.date == True:
-        line = date_act()
+        line = date_act(args.f)
         line.render("render/date_act.html")
     if args.meme != 0:
         dic = meme_freq(args.meme)
@@ -221,3 +239,12 @@ if __name__ == '__main__':
         match_reply(args.match, args.f)
     if args.uid != '':
         uid_reply(args.uid, args.f)
+    if args.new != 0:
+        dic = new_user(args.new)
+        total = np.sum(np.array(list(dic.values())))
+        print(total)
+        print_dic(dic)
+    if args.loc != '':
+        locate(args.loc, args.f)
+    if args.ipt != '':
+        ipt(args.ipt)
