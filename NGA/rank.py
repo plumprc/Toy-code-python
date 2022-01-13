@@ -90,7 +90,7 @@ class Rank():
                 r = re.findall(match, con)
                 if len(r) != 0:
                     with open(str(match) + '.txt', 'a+', encoding='utf-8') as f:
-                        f.write(str(item['uid']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+                        f.write(str(item['uid']) + ' #' + str(item['floor']) + ' P' + str(item['floor'] // 20 + 1) + ' ' + con + '\n')
 
         return 1
 
@@ -100,7 +100,7 @@ class Rank():
                 text = item['reply']
                 for con in text:
                     with open(str(uid) + '.txt', 'a+', encoding='utf-8') as f:
-                        f.write(str(item['date']) + ' #' + str(item['floor']) + ' ' + con + '\n')
+                        f.write('#' + str(item['floor']) + ' P' + str(item['floor'] // 20 + 1) + ' ' + con + '\n')
         
         return 1
 

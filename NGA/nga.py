@@ -16,7 +16,11 @@ def clean_quote(reply_list):
         r = re.findall('uid=[0-9]+?\]', reply_list[0])
         if len(r) != 0:
             Ruid = 'R' + r[0][3:-1]
-        else: Ruid = 'R=anony'
+        else: 
+            anony = re.findall('anony_[\S]+?\[', reply_list[0])
+            if len(anony) != 0:
+                Ruid = 'R=' + anony[0][:-1]
+            else: Ruid = 'R=anony'
         cnt = 1
         for con in reply_list:
             if con.find('/quote') != -1:
@@ -150,6 +154,7 @@ class NGA(object):
             if floor == 0:
                 reply = main
             else: reply = post.xpath('//*[@id="postcontent' + str(floor) + '"]//text()')
+            # print(reply[0])
 
             if len(reply) != 0:
                 reply = clean_quote(reply)
@@ -163,6 +168,7 @@ class NGA(object):
 
 
 if __name__ == '__main__':
+    # HB_tid: 28817641, 29365342, 29593236, 29799537, 29874047, 30226559
     parser = argparse.ArgumentParser()
     parser.add_argument('--tid', type=str, default='0', help='tid')
     parser.add_argument('--p', type=int, default=1, help='start page')

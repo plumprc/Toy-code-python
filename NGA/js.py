@@ -2,9 +2,9 @@ import os
 import json
 import argparse
 
-def merge(filename, sort=False):
+def merge(filename, sort):
     files = os.listdir(filename)
-    if sort == True:
+    if sort == 1:
         files.sort(key=lambda x:int(x[:-5]))
     fin = []
     for file in files:
@@ -19,7 +19,7 @@ def merge(filename, sort=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, default='', help='file path')
-    parser.add_argument('--sort', type=bool, default=True, help='sort mode')
+    parser.add_argument('--sort', type=int, default=1, help='sort mode')
     args = parser.parse_args()
     if args.path != '':
         merge(args.path, args.sort)
