@@ -19,7 +19,7 @@ def merge(filename, sort=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, default='', help='file path')
-    parser.add_argument('--sort', type=bool, default=False, help='sort mode')
+    parser.add_argument('--sort', type=bool, default=True, help='sort mode')
     args = parser.parse_args()
     if args.path != '':
         merge(args.path, args.sort)

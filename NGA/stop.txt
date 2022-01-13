@@ -1,5 +1,5 @@
 anony
-Ruid
+R=
 d100
 roll
 反正

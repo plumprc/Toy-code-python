@@ -31,7 +31,7 @@ def clean_quote(reply_list):
 def clean_reply(reply_list):
     for idx in range(len(reply_list)):
         s = reply_list[idx]
-        r = re.findall(r'\[b\][\s\S]+?\[\/b\]', s)
+        r = re.findall(r'\[b\][\s\S]+?\[\/b', s)
         if len(r) != 0:
             for con in r:
                 uid = re.findall(r'\[uid=-?\d+\]', con)
@@ -42,10 +42,23 @@ def clean_reply(reply_list):
                 if len(anony) != 0:\
                     s = s.replace(con, 'R=' + anony[0][:-1] + ' ')
                 
-        
-        reply_list[idx] = s
+        r = re.findall(r'\[pid[\s\S]+?\[\/pid\]', s)
+        if len(r) != 0:
+            for con in r:
+                s = s.replace(con, '')
     
+        reply_list[idx] = s
+
     return reply_list
+
+def clean_s(reply_list):
+    for idx in range(len(reply_list)):
+        s = reply_list[idx]
+        r = re.findall(r'四哈人基建公约', s)
+        if len(r) != 0:
+            reply_list = reply_list[:idx]
+            break
+    return reply_list    
 
 class NGA(object):
     def __init__(self):
@@ -73,10 +86,9 @@ class NGA(object):
             main = etree.HTML(r.text).xpath('//*[@id="postcontent0"]/text()')
             file = etree.HTML(r.text).xpath('//*[@id="postsubject0"]/text()')[0]
         
-        # if not os.path.exists(file):
-        #     os.mkdir(file)
-        for i in range(start, total+1):
-        # for i in tqdm(range(start, total+1)):
+        if not os.path.exists(file):
+            os.mkdir(file)
+        for i in tqdm(range(start, total+1)):
             s = []
             try:
                 r = requests.get(f'https://bbs.nga.cn/read.php?tid={tid}&page={i}', headers=self.headers)
@@ -86,40 +98,76 @@ class NGA(object):
                 data = etree.HTML(r.text)
                 for post in data.xpath('//table[@class="forumbox postbox"]'):
                     uid, floor = post.xpath('.//a[@class="author b"]/@*')[:-1]
-                    reply = post.xpath('.//span[@class="postcontent ubbcode"]//text()')
-                    date = post.xpath('.//div[@class="postInfo"]/span//text()')
-                    
                     floor = int(floor.replace('postauthor', ''))
-                    if floor == 2378:
-                        print(floor, reply)
-                    
+                    if floor == 0:
+                        reply = main
+                    else: reply = post.xpath('.//span[@class="postcontent ubbcode"]//text()')
+                    date = post.xpath('.//div[@class="postInfo"]/span//text()')
+                                        
                     if len(reply) != 0:
                         reply = clean_quote(reply)
                         reply = clean_reply(reply)
+                    if floor % 1000 == 0:
+                        reply = clean_s(reply)
 
-                    if floor == 2378:
-                        print(floor, reply)
+                    s.append({'uid': int(uid.split('=')[-1]), 
+                            'floor': floor, 
+                            'reply': reply,
+                            'date': date})
 
-                break
-
-                #     s.append({'uid': int(uid.split('=')[-1]), 
-                #             'floor': int(floor.replace('postauthor', '')), 
-                #             'reply': main if floor == 'postauthor0' else reply,
-                #             'date': date})
-
-                # with open(f'{file}//{i}.json', 'a+', encoding='utf-8') as f:
-                #     json.dump(s, f, ensure_ascii=False)
+                with open(f'{file}//{i}.json', 'a+', encoding='utf-8') as f:
+                    json.dump(s, f, ensure_ascii=False)
             
             else:
                 return 103
             time.sleep(0.25)
         return 1
 
+    def loc_floor(self, tid: str, floor: int) -> int:
+        try:
+            r = requests.get(f'https://bbs.nga.cn/read.php?tid={tid}', headers=self.headers)
+        except Exception:
+            return 101
+        try:
+            total = int(re.search(r"',\d+:\d+", r.text).group().split(':')[1])
+        except Exception:
+            total = 1
+        
+        page = floor // 20 + 1
+        if page == 1:
+            main = etree.HTML(r.text).xpath('//*[@id="postcontent0"]/text()')
+        if page > total:
+            return 404
+
+        try:
+            r = requests.get(f'https://bbs.nga.cn/read.php?tid={tid}&page={page}', headers=self.headers)
+        except Exception:
+            return 102
+        if r.status_code == 200:
+            data = etree.HTML(r.text)
+            post = data.xpath('//table[@class="forumbox postbox"]')[floor % 20]
+            uid = post.xpath('.//a[@class="author b"]/@*')[0].split('=')[-1]
+            if floor == 0:
+                reply = main
+            else: reply = post.xpath('//*[@id="postcontent' + str(floor) + '"]//text()')
+
+            if len(reply) != 0:
+                reply = clean_quote(reply)
+                reply = clean_reply(reply)
+            if floor % 1000 == 0:
+                reply = clean_s(reply)
+
+            print(uid, reply)
+        
+        return 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--tid', type=str, default='0', help='tid')
-    parser.add_argument('--p', type=int, default=1, help='p')
+    parser.add_argument('--p', type=int, default=1, help='start page')
+    parser.add_argument('--loc', type=int, default=-1, help='locate floor reply')
     args = parser.parse_args()
-    # print(NGA().get_reply(args.tid, args.p))
-    NGA().get_reply("30226559", 119)
+    if args.loc < 0:
+        print(NGA().get_reply(args.tid, args.p))
+    else: NGA().loc_floor(args.tid, args.loc)
