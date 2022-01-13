@@ -11,7 +11,7 @@ color = ["mediumseagreen", "violet", "deeppink", "dodgerblue", "darkorange"]
 colormap = colors.ListedColormap(color)
 un_seg = ['妮老师', '牛子豪', '猫虚', '哈哈哈哈', '我不好说', '巴旦木', '普罗维登', 
         '捏麻麻滴', '捏麻麻地', '一号楼', '二号楼', '三号楼', '四号楼', '五号楼', 
-        '量子二踢腿', '瓶gachi', '季gachi', '妮gachi', '单推人']
+        '量子二踢腿', '瓶gachi', '季gachi', '妮gachi', '单推人', '露露耶', '露露子']
 
 def stop_wordlist():
     stopwords = [line.strip() for line in open('stop.txt',encoding='utf-8').readlines()]

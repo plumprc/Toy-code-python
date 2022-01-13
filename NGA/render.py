@@ -58,17 +58,19 @@ def act_freq():
     dic3 = Rank('statistics/HB_3.json').get_rank()
     dic4 = Rank('statistics/HB_4.json').get_rank()
     dic5 = Rank('statistics/HB_5.json').get_rank()
+    dic6 = Rank('statistics/HB_6.json').get_rank()
     len1, data1 = ydata(dic1)
     len2, data2 = ydata(dic2)
     len3, data3 = ydata(dic3)
     len4, data4 = ydata(dic4)
     len5, data5 = ydata(dic5)
+    len6, data6 = ydata(dic6)
 
     pie = (
         Pie()
         .add(
             "活跃用户总数",
-            [list(z) for z in zip(['一号楼: ' + str(len1), '二号楼: ' + str(len2), '三号楼: ' + str(len3), '四号楼: ' + str(len4), '五号楼: ' + str(len5)], [len1, len2, len3, len4, len5])],
+            [list(z) for z in zip(['一号楼: ' + str(len1), '二号楼: ' + str(len2), '三号楼: ' + str(len3), '四号楼: ' + str(len4), '五号楼: ' + str(len5), '六号楼: ' + str(len6)], [len1, len2, len3, len4, len5, len6])],
             center=["75%", "35%"],
             radius="40%",
         )
@@ -83,6 +85,7 @@ def act_freq():
         .add_yaxis('三号楼: ' + str(len3), data3)
         .add_yaxis('四号楼: ' + str(len4), data4)
         .add_yaxis('五号楼: ' + str(len5), data5)
+        .add_yaxis('六号楼: ' + str(len6), data6)
         .set_global_opts(
             title_opts=opts.TitleOpts(title="专楼发言频率"),
             yaxis_opts=opts.AxisOpts(name="用户数"),

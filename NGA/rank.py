@@ -2,6 +2,14 @@ import json
 import re
 import datetime
 
+def name(uid):
+    with open('uid2name.json', 'r', encoding='utf-8') as f:
+        name = json.load(f)
+    if str(uid) in name:
+        return name[str(uid)]
+    
+    return str(uid)
+
 class Rank():
     def __init__(self, file_name):
         self.file = open(file_name, encoding='utf-8')
@@ -129,22 +137,19 @@ class Rank():
 
     def get_ipt(self):
         for item in self.data:
-            text = item['reply']
-            flag = False
+            text = item['reply']                
             for con in text:
                 r = re.findall("\[同传\]", con)
                 if len(r) != 0:
-                    flag = True
+                    with open('ipt.txt', 'a+', encoding='utf-8') as f:
+                        f.write(name(item['uid']) + ' #' + str(item['floor']) + '\n')
                     for con in text:
                         with open('ipt.txt', 'a+', encoding='utf-8') as f:
-                            f.write(str(item['uid']) + ' #' + str(item['floor']) + ' [同传]\n' + con + '\n')
-                    
-                if flag == True:
-                    continue
-                
-                r = re.findall("\“[\s\S]+?\”", con)
-                if len(r) != 0:
+                            f.write(con + '\n')
+
                     with open('ipt.txt', 'a+', encoding='utf-8') as f:
-                        f.write(str(item['uid']) + ' #' + str(item['floor']) + ' no_quote\n' + con + '\n=========\n')
+                        f.write('=========\n\n')
+                    
+                    break
         
         return 1
