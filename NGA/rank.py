@@ -83,6 +83,23 @@ class Rank():
         dic = sorted(dic.items(), key=lambda x:x[1], reverse=True)
         return dic
 
+    def get_uid_meme(self, uid):
+        dic = {}
+        for item in self.data:
+            if uid != item['uid']:
+                continue
+            text = item['reply']
+            for con in text:
+                r = re.findall('\[s:\S*?\]', con)
+                if len(r) != 0:
+                    for meme in r:
+                        if meme not in dic:
+                            dic[meme] = 1
+                        else: dic[meme] += 1
+
+        dic = sorted(dic.items(), key=lambda x:x[1], reverse=True)
+        return dic
+
     def get_match_reply(self, match):
         for item in self.data:
             text = item['reply']

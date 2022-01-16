@@ -175,6 +175,12 @@ def meme_uid(meme, num):
     dic = dict(dic[:3])
     return uid2name(dic)
 
+def uid_meme(uid, f=0):
+    if f == 0:
+        dic = Rank('statistics/HB.json').get_uid_meme(uid)
+    else: dic = Rank('statistics/HB_' + str(f) + '.json').get_uid_meme(uid)
+    return dict(dic[:3])
+
 def match_reply(match, f=0):
     if f == 0:
         Rank('statistics/HB.json').get_match_reply(match)
@@ -208,6 +214,7 @@ if __name__ == '__main__':
     parser.add_argument('--date', type=bool, default=False, help='date act')
     parser.add_argument('--meme', type=int, default=0, help='meme freq')
     parser.add_argument('--meme_u', type=str, default='', help='meme uid')
+    parser.add_argument('--u_meme', type=int, default=0, help='uid meme')
     parser.add_argument('--match', type=str, default='', help='match text')
     parser.add_argument('--uid', type=str, default='', help='uid reply')
     parser.add_argument('--new', type=int, default=0, help='new user')
@@ -237,6 +244,9 @@ if __name__ == '__main__':
     if args.meme_u != '':
         dic = meme_uid("\[s:ac:" + args.meme_u[:-1] + "\]", int(args.meme_u[-1]))
         print("[s:ac:" + args.meme_u[:-1] + ']')
+        print_dic(dic)
+    if args.u_meme != 0:
+        dic = uid_meme(args.u_meme, args.f)
         print_dic(dic)
     if args.match != '':
         match_reply(args.match, args.f)
