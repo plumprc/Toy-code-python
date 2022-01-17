@@ -6,6 +6,7 @@ import requests
 from tqdm import tqdm
 from lxml import etree
 import argparse
+from fake_useragent import UserAgent
 
 def clean_quote(reply_list):
     if reply_list[0].find('[quote]') == -1:
@@ -65,15 +66,16 @@ def clean_s(reply_list):
     return reply_list    
 
 class NGA(object):
-    def __init__(self):
+    def __init__(self, head):
         self.headers = {
             'Connection': 'keep-alive',
             'Accept-Language': 'zh-CN,zh;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'Upgrade-Insecure-Requests': '1',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36',
-            'Cookie': 'taihe_bi_sdk_uid=9f6b3350fa4f95f39ae629d7d6d2433d; taihe=a1747dcebbecee5a50f8dfa53cd7005c; UM_distinctid=177b9ce533354b-0a9bab952bd6fb-73e356b-144000-177b9ce5334617; CNZZDATA30043604=cnzz_eid=1103191160-1594714273-https%3A%2F%2Fbbs.nga.cn%2F&ntime=1623134901; ngacn0comUserInfo=Drelf	Drelf	39	39		10	200	4	0	0	61_2; ngacn0comUserInfoCheck=731861771366f61e88f3af515823dbec; ngacn0comInfoCheckTime=1623137434; ngaPassportUid=61710301; ngaPassportUrlencodedUname=Drelf; ngaPassportCid=X95hemmhg11gme0ll3gusboc7ilo2r3p6fbcu0am; lastvisit=1623137722; lastpath=/thread.php?fid=734&ff=-34587507; bbsmisccookies={"uisetting":{0:0,1:1624459883},"pv_count_for_insad":{0:-157,1:1623171704},"insad_views":{0:2,1:1623171704}}; _cnzz_CV30043604=forum|fid-34587507|0'
+            'User-Agent': head,
+            'Cookie': 'taihe_bi_sdk_uid=9f6b3350fa4f95f39ae629d7d6d2433d; taihe=a1747dcebbecee5a50f8dfa53cd7005c; UM_distinctid=177b9ce533354b-0a9bab952bd6fb-73e356b-144000-177b9ce5334617; CNZZDATA30043604=cnzz_eid=1103191160-1594714273-https%3A%2F%2Fbbs.nga.cn%2F&ntime=1623134901; ngacn0comUserInfo=Drelf	Drelf	39	39		10	200	4	0	0	61_2; ngacn0comUserInfoCheck=731861771366f61e88f3af515823dbec; ngacn0comInfoCheckTime=1623137434; ngaPassportUid=61710301; ngaPassportUrlencodedUname=Drelf; ngaPassportCid=X95hemmhg11gme0ll3gusboc7ilo2r3p6fbcu0am; lastvisit=1623137722; lastpath=/thread.php?fid=734&ff=-34587507; bbsmisccookies={"uisetting":{0:0,1:1624459883},"pv_count_for_insad":{0:-157,1:1623171704},"insad_views":{0:2,1:1623171704}}; _cnzz_CV30043604=forum|fid-34587507|0',
+            # 'Cookie' : 'taihe_bi_sdk_uid=03115940491b006f86a50550e6ef9a6d; Hm_lvt_efa0bf813242f01d2e1c0da09e3526bd=1624449335; CNZZDATA30039253=cnzz_eid=1393177603-1638955102-https:%2F%2Fbbs.nga.cn%2F&ntime=1638955102; UM_distinctid=17de6e23cf2129d-035b0a3747e7eb-4303066-1bcab9-17de6e23cf392c; ngacn0comUserInfo=plumprc	plumprc	39	39		10	0	4	0	0	; ngaPassportUid=61055728; ngaPassportUrlencodedUname=plumprc; Hm_lvt_7f3c7021befced5794c58fb4cdf1e85c=1642246051; CNZZDATA30043604=cnzz_eid=1099073169-1638954853-null%26ntime=1642423002; ngacn0comUserInfoCheck=a25109fd31f65f0db45309b410da0759; ngacn0comInfoCheckTime=1642425371; lastpath=/read.php?tid=30226559&_ff=-60204499&page=1045; lastvisit=1642425965; bbsmisccookies={"uisetting":{0:1,1:1642834943},"pv_count_for_insad":{0:-234,1:1642438880},"insad_views":{0:3,1:1642438880}}; _cnzz_CV30043604=forum|fid-60204499|0'
         }
 
     def get_reply(self, tid: str, start: int, file: str='merge') -> int:
@@ -124,7 +126,7 @@ class NGA(object):
             
             else:
                 return 103
-            time.sleep(0.25)
+            time.sleep(0.5)
         return 1
 
     def loc_floor(self, tid: str, floor: int) -> int:
@@ -175,5 +177,5 @@ if __name__ == '__main__':
     parser.add_argument('--loc', type=int, default=-1, help='locate floor reply')
     args = parser.parse_args()
     if args.loc < 0:
-        print(NGA().get_reply(args.tid, args.p))
-    else: NGA().loc_floor(args.tid, args.loc)
+        print(NGA(UserAgent().random).get_reply(args.tid, args.p))
+    else: NGA(UserAgent().random).loc_floor(args.tid, args.loc)

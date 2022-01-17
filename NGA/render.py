@@ -25,8 +25,10 @@ def live(num):
     return Rank('statistics/HB_' + str(num) + '.json').get_live()
 
 def rank(num):
-    dic = Rank('statistics/HB_' + str(num) + '.json').get_rank()
-    dic = dict(dic[:10])    
+    if num == 0:
+        dic = Rank('statistics/HB.json').get_rank()
+    else: dic = Rank('statistics/HB_' + str(num) + '.json').get_rank()
+    dic = dict(dic[:10])
     return uid2name(dic)
 
 def ydata(dic):
@@ -207,7 +209,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--f', type=int, default=0, help='HB_f')
     parser.add_argument('--live', type=int, default=0, help='live days')
-    parser.add_argument('--rank', type=int, default=0, help='rank')
+    parser.add_argument('--rank', type=int, default=-1, help='rank')
     parser.add_argument('--act', type=bool, default=False, help='act freq')
     parser.add_argument('--time', type=int, default=0, help='time freq')
     parser.add_argument('--calen', type=bool, default=False, help='calen flow')
@@ -223,7 +225,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.live != 0:
         print(live(args.live))
-    if args.rank != 0:
+    if args.rank != -1:
         dic = rank(args.rank)
         print_dic(dic)
     if args.act == True:
