@@ -170,7 +170,7 @@ class NGA(object):
 
 
 if __name__ == '__main__':
-    # HB_tid: 28817641, 29365342, 29593236, 29799537, 29874047, 30226559
+    # HB_tid: 28817641, 29365342, 29593236, 29799537, 29874047, 30226559, 30507888, 30675625
     parser = argparse.ArgumentParser()
     parser.add_argument('--tid', type=str, default='0', help='tid')
     parser.add_argument('--p', type=int, default=1, help='start page')

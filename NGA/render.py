@@ -5,7 +5,7 @@ import argparse
 from pyecharts.charts import Bar, Pie, Line
 from pyecharts import options as opts
 
-num2word = {1 : '一', 2 : '二', 3 : '三', 4 : '四', 5 : '五', 6 : '六'}
+num2word = {1 : '一', 2 : '二', 3 : '三', 4 : '四', 5 : '五', 6 : '六', 7 : '七', 8 : '八'}
 
 def print_dic(dic):
     for k, v in dic.items():
