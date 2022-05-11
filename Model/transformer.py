@@ -1,6 +1,9 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
+import torch.optim as optim
+import torch.utils.data as Data
+from matplotlib import pyplot as plt
 
 def get_subsequent_mask(seq):
     seq_len = seq.shape[1]
@@ -8,6 +11,9 @@ def get_subsequent_mask(seq):
     mask = 1 - torch.triu(ones, diagonal=1)
 
     return mask
+
+def criterion(pred, true):
+    return torch.mean(torch.abs(pred-true))
 
 class PositionalEncoding(nn.Module):
     def __init__(self, in_dim, out_dim, n_position=50):
@@ -23,8 +29,8 @@ class PositionalEncoding(nn.Module):
             return [position / np.power(10000, 2 * (hid_j // 2) / out_dim) for hid_j in range(out_dim)]
         
         sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(n_position)])
-        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])
+        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])
 
         return torch.FloatTensor(sinusoid_table).unsqueeze(0)
 
@@ -65,10 +71,10 @@ class MultiHeadAttention(nn.Module):
         self.linear_v = nn.Linear(in_features=in_dim, out_features=n_head*out_dim)
 
         self.scaled_dot_production_attention = ScaledDotProductAttention()
-        self.linear = nn.Linear(in_features=n_head*out_dim, out_features=out_dim) #这里out_features可以随意指定，这个就是encoder最终输出的qkv的维度，为了简便和out_dim一致
+        self.linear = nn.Linear(in_features=n_head*out_dim, out_features=out_dim)
 
     def forward(self, q, k, v, mask=None):
-        batch_size, len_q, len_kv = q.shape[0], q.shape[1], k.shape[1] #k和v的长度一直一致，但是在解码中，会出现q和kv长度不同的情况
+        batch_size, len_q, len_kv = q.shape[0], q.shape[1], k.shape[1]
 
         #(B, T, in_dim) -> (B, T, n_head * out_dim) -> (B, T, n_head, out_dim)
         q = self.linear_q(q).view(batch_size, len_q, self.n_head, self.out_dim)
@@ -167,19 +173,19 @@ class Decoder(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, n_head, en_dim, de_dim):
+    def __init__(self, n_head, en_dim, de_dim, out_features):
         super(Transformer, self).__init__()
 
         self.encoder = Encoder(n_head, in_dim=en_dim, out_dim=64)
         self.decoder = Decoder(n_head, in_dim=de_dim, out_dim=64)
-        self.linear = nn.Linear(in_features=64, out_features=5)
+        self.linear = nn.Linear(in_features=64, out_features=out_features)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, y):
         enc_outputs = self.encoder(x)
         outputs = self.decoder(enc_outputs, y)
         outputs = self.linear(outputs)
-        outputs = self.softmax(outputs)
+        # outputs = self.softmax(outputs)
 
         return outputs
 
@@ -189,9 +195,45 @@ class Transformer(nn.Module):
 
 
 if __name__ == '__main__':
-    model = Transformer(4, 20, 10)
-    # (B, T, dim)
-    batch_x = torch.randn(16, 10, 20)
-    batch_y = torch.randn(16, 5, 10)
-    pred = model(batch_x, batch_y)
-    print(pred.shape)
+    torch.manual_seed(42)
+    model = Transformer(n_head=4, en_dim=4, de_dim=4, out_features=1)
+    data_embd = nn.Linear(1, 4)
+
+    # x -> sin(x) + alpha * x
+    alpha = 0.005
+    base = torch.linspace(-1000, 1000, 5000)
+    outlier = torch.Tensor(np.random.normal(0, 0.1, 5000))
+    x = base.reshape(250, 20).unsqueeze(2)
+    y = (torch.sin(base) + alpha * base).reshape(250, 20).unsqueeze(2)
+    # y = (torch.sin(base) + outlier).reshape(250, 20).unsqueeze(2)
+    x = (x - x.mean()) / x.std()
+    y = (y - y.mean()) / y.std()
+
+    data_set = Data.TensorDataset(x, y)
+    data_loader = Data.DataLoader(
+        dataset=data_set,
+        batch_size=32,
+        shuffle=True
+    )
+
+    model_optim = optim.Adam(model.parameters(), lr=0.0001)
+
+    for epoch in range(10):
+        for step, (batch_x, batch_y) in enumerate(data_loader):
+            x = data_embd(batch_x)
+            y = data_embd(batch_y)
+
+            model_optim.zero_grad()
+            pred = model(x, y)
+
+            loss = criterion(pred, batch_y)
+            loss.backward()
+
+            if step % 10 == 0:
+                print('epoch:', epoch, 'step:', step, 'loss:', loss.item())
+            
+            model_optim.step()
+
+    plt.plot(batch_y[0].reshape(-1))
+    plt.plot(pred[0].detach().reshape(-1))
+    plt.show()
