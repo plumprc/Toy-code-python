@@ -36,6 +36,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         x = self.linear(x)
+
         return x + self.pos_table[:, :x.size(1)].clone().detach()
 
 
@@ -140,7 +141,6 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, n_head,in_dim, out_dim):
         super(Decoder, self).__init__()
-
         self.position_enc = PositionalEncoding(in_dim, out_dim)
         self.multi_head_attention_1_1 = MultiHeadAttention(n_head=n_head, in_dim=out_dim, out_dim=out_dim)
         self.layer_norm_1_1 = torch.nn.LayerNorm(out_dim)
@@ -196,6 +196,7 @@ class Transformer(nn.Module):
 
 if __name__ == '__main__':
     torch.manual_seed(42)
+    np.random.seed(42)
     model = Transformer(n_head=4, en_dim=4, de_dim=4, out_features=1)
     data_embd = nn.Linear(1, 4)
 
@@ -204,8 +205,8 @@ if __name__ == '__main__':
     base = torch.linspace(-1000, 1000, 5000)
     outlier = torch.Tensor(np.random.normal(0, 0.1, 5000))
     x = base.reshape(250, 20).unsqueeze(2)
-    y = (torch.sin(base) + alpha * base).reshape(250, 20).unsqueeze(2)
-    # y = (torch.sin(base) + outlier).reshape(250, 20).unsqueeze(2)
+    y = (torch.sin(base) + alpha * base + outlier).reshape(250, 20).unsqueeze(2)
+    # y = (base + outlier).reshape(250, 20).unsqueeze(2)
     x = (x - x.mean()) / x.std()
     y = (y - y.mean()) / y.std()
 
