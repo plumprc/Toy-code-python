@@ -16,10 +16,11 @@ def criterion(pred, true):
     return torch.mean(torch.abs(pred-true))
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, in_dim, out_dim, n_position=50):
+    def __init__(self, in_dim, out_dim, n_position=50, pos=True):
         super(PositionalEncoding, self).__init__()
 
         self.linear = nn.Linear(in_features=in_dim, out_features=out_dim)
+        self.pos = pos
         # Not a parameter
         self.register_buffer('pos_table', self._get_sinusoid_encoding_table(n_position, out_dim))
 
@@ -37,7 +38,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
         x = self.linear(x)
 
-        return x + self.pos_table[:, :x.size(1)].clone().detach()
+        return x if self.pos == False else x + self.pos_table[:, :x.size(1)].clone().detach()
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -111,10 +112,10 @@ class PositionWiseFeedForward(torch.nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, n_head, in_dim, out_dim):
+    def __init__(self, n_head, in_dim, out_dim, pos):
         super(Encoder, self).__init__()
 
-        self.position_enc = PositionalEncoding(in_dim, out_dim)
+        self.position_enc = PositionalEncoding(in_dim, out_dim, pos=pos)
         self.multi_head_attention_1 = MultiHeadAttention(n_head=n_head, in_dim=out_dim, out_dim=out_dim)
         self.layer_norm_1_1 = nn.LayerNorm(out_dim)
 
@@ -139,9 +140,9 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, n_head,in_dim, out_dim):
+    def __init__(self, n_head,in_dim, out_dim, pos):
         super(Decoder, self).__init__()
-        self.position_enc = PositionalEncoding(in_dim, out_dim)
+        self.position_enc = PositionalEncoding(in_dim, out_dim, pos=pos)
         self.multi_head_attention_1_1 = MultiHeadAttention(n_head=n_head, in_dim=out_dim, out_dim=out_dim)
         self.layer_norm_1_1 = torch.nn.LayerNorm(out_dim)
 
@@ -173,13 +174,13 @@ class Decoder(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, n_head, en_dim, de_dim, out_features):
+    def __init__(self, n_head, en_dim, de_dim, out_features, pos):
         super(Transformer, self).__init__()
 
-        self.encoder = Encoder(n_head, in_dim=en_dim, out_dim=64)
-        self.decoder = Decoder(n_head, in_dim=de_dim, out_dim=64)
+        self.encoder = Encoder(n_head, in_dim=en_dim, out_dim=64, pos=pos)
+        self.decoder = Decoder(n_head, in_dim=de_dim, out_dim=64, pos=pos)
         self.linear = nn.Linear(in_features=64, out_features=out_features)
-        self.softmax = nn.Softmax(dim=-1)
+        # self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, y):
         enc_outputs = self.encoder(x)
@@ -194,19 +195,45 @@ class Transformer(nn.Module):
         print('%.2fKB' % (size * 4 / 1024))
 
 
+class DataEmbedding(nn.Module):
+    def __init__(self, in_dim=1, out_dim=4, mode='linear'):
+        super(DataEmbedding, self).__init__()
+        
+        self.linear = nn.Linear(in_dim, out_dim)
+        self.conv = nn.Conv1d(in_channels=in_dim, out_channels=out_dim, kernel_size=3, padding=1)
+        # self.norm = nn.BatchNorm1d(out_dim)
+        self.activation = nn.ELU()
+        self.mode = mode
+
+    def forward(self, x):
+        assert self.mode in ['linear', 'conv']
+
+        if self.mode == 'linear':
+            x = self.linear(x)
+            # x = self.norm(x.transpose(1, 2)).transpose(1, 2)
+        
+        else:
+            x = self.conv(x.transpose(1, 2))
+            # x = self.norm(x)
+            x = x.transpose(1, 2)
+
+        x = self.activation(x)
+        return x
+
+
 if __name__ == '__main__':
     torch.manual_seed(42)
     np.random.seed(42)
-    model = Transformer(n_head=4, en_dim=4, de_dim=4, out_features=1)
-    data_embd = nn.Linear(1, 4)
+    model = Transformer(n_head=4, en_dim=4, de_dim=4, out_features=1, pos=False)
+    data_embd = DataEmbedding(1, 4, mode='linear')
 
-    # x -> sin(x) + alpha * x
-    alpha = 0.005
-    base = torch.linspace(-1000, 1000, 5000)
-    outlier = torch.Tensor(np.random.normal(0, 0.1, 5000))
-    x = base.reshape(250, 20).unsqueeze(2)
-    y = (torch.sin(base) + alpha * base + outlier).reshape(250, 20).unsqueeze(2)
-    # y = (base + outlier).reshape(250, 20).unsqueeze(2)
+    # x -> sin(alpha * x) + beta * x + outliers
+    alpha = 200
+    beta = 3
+    base = np.linspace(-1000, 1000, 5000) / 1000
+    outlier = np.random.normal(0, 0.01, 5000)
+    x = torch.Tensor(base.reshape(250, 20)).unsqueeze(2)
+    y = torch.Tensor((np.sin(alpha * base) + beta * base + outlier).reshape(250, 20)).unsqueeze(2)
     x = (x - x.mean()) / x.std()
     y = (y - y.mean()) / y.std()
 
@@ -221,12 +248,11 @@ if __name__ == '__main__':
 
     for epoch in range(10):
         for step, (batch_x, batch_y) in enumerate(data_loader):
-            x = data_embd(batch_x)
-            y = data_embd(batch_y)
+            x_embed = data_embd(batch_x)
+            y_embed = data_embd(batch_y)
 
             model_optim.zero_grad()
-            pred = model(x, y)
-
+            pred = model(x_embed, y_embed)
             loss = criterion(pred, batch_y)
             loss.backward()
 
@@ -235,6 +261,11 @@ if __name__ == '__main__':
             
             model_optim.step()
 
-    plt.plot(batch_y[0].reshape(-1))
-    plt.plot(pred[0].detach().reshape(-1))
+    model.eval()
+    x_embed = data_embd(x)
+    y_embed = data_embd(y)
+    pred = model(x_embed, y_embed)
+
+    plt.plot(y.reshape(-1)[2000:3000])
+    plt.plot(pred.detach().reshape(-1)[2000:3000])
     plt.show()
