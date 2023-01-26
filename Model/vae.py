@@ -7,8 +7,9 @@ from torchvision.utils import save_image
 
 batch = 128
 epochs = 30
-device = torch.device('cuda:2')
-dataset = datasets.MNIST(root='datasets', train=True, transform=transforms.ToTensor(), download=False)
+# device = torch.device('cuda:2')
+device = 'cpu'
+dataset = datasets.MNIST(root='datasets', train=True, transform=transforms.ToTensor(), download=True)
 data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True)
 
 class VAE(nn.Module):
@@ -39,7 +40,8 @@ class VAE(nn.Module):
         # encoder: [batch, 40]
         mu, logvar = torch.chunk(h, 2, dim=1)
         # paras, z: [batch, 20]
-        z = self.reparameterize(mu, logvar)
+        # z = self.reparameterize(mu, logvar)
+        z = mu + logvar.mul(0.5).exp_()
         return self.decoder(z), mu, logvar
 
 
@@ -69,7 +71,7 @@ if __name__ == '__main__':
             if idx % 100 == 0:
                 print("Epoch[{}/{}] Loss: {:.3f}".format(epoch + 1, epochs, loss.item() / batch))
 
-    # torch.save(vae, 'vae.pth')
+    torch.save(vae, 'vae.pth')
     sample = torch.randn(128, 20).to(device)
     recon_x = vae.decoder(sample)
     save_image(recon_x.view(recon_x.size(0), 1, 28, 28).data.cpu(), 'sample.png')
