@@ -47,8 +47,7 @@ class CVAE(nn.Module):
         # encoder: [batch, 40]
         mu, logvar = torch.chunk(h, 2, dim=1)
         # paras, z: [batch, 20]
-        # z = self.reparameterize(mu, logvar)
-        z = mu + logvar.mul(0.5).exp_()
+        z = self.reparameterize(mu, logvar)
         
         return self.decoder(torch.cat([z, context], 1)), mu, logvar
 
@@ -88,7 +87,8 @@ if __name__ == '__main__':
 
     # torch.save(cvae, 'cvae.pth')
     cvae = torch.load('cvae.pth')
+    cvae.eval()
     sample = torch.randn(32, 20).to(device)
-    label = torch.from_numpy(np.tile(np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0]), 32).reshape(32, 10)).float().to(device)
-    recon_x = cvae.decoder(torch.cat([sample, label], 1))
+    label = torch.from_numpy(np.tile(np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0]), 32).reshape(32, 10)).float().to(device)
+    recon_x = cvae.decoder(torch.cat([sample, label[:32]], 1))
     save_image(recon_x.view(recon_x.size(0), 1, 28, 28).data.cpu(), 'sample.png')
