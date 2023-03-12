@@ -1,8 +1,9 @@
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as Data
+import numpy as np
 from matplotlib import pyplot as plt
 
 def get_subsequent_mask(seq):
@@ -12,8 +13,6 @@ def get_subsequent_mask(seq):
 
     return mask
 
-def criterion(pred, true):
-    return torch.mean(torch.abs(pred-true))
 
 class PositionalEncoding(nn.Module):
     def __init__(self, in_dim, out_dim, n_position=50, pos=True):
@@ -253,7 +252,7 @@ if __name__ == '__main__':
 
             model_optim.zero_grad()
             pred = model(x_embed, y_embed)
-            loss = criterion(pred, batch_y)
+            loss = F.mse_loss(pred, batch_y)
             loss.backward()
 
             if step % 10 == 0:

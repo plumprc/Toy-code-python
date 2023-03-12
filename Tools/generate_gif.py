@@ -5,7 +5,7 @@ import argparse
 
 def generate_gif(path):
     images = []
-    for file in sorted([file for file in Path(path).glob('*.png')]):
+    for file in sorted([file for file in Path(path).glob('*.jpg')]):
         images.append(imageio.imread(file))
     
     imageio.mimsave('recon_image.gif', images)

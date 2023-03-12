@@ -71,56 +71,56 @@ class Discriminator(nn.Module):
 
         return validity
 
-
-dataloader = torch.utils.data.DataLoader(
-    datasets.MNIST(
-        "./datasets",
-        train=True,
-        download=False,
-        transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+if __name__ == '__main__':
+    dataloader = torch.utils.data.DataLoader(
+        datasets.MNIST(
+            "./datasets",
+            train=True,
+            download=False,
+            transform=transforms.Compose(
+                [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize([0.5], [0.5])]
+            ),
         ),
-    ),
-    batch_size=opt.batch_size,
-    shuffle=True,
-)
+        batch_size=opt.batch_size,
+        shuffle=True,
+    )
 
-# Initialize generator and discriminator
-generator = Generator(100, (1, 28, 28))
-discriminator = Discriminator((1, 28, 28))
-adversarial_loss = torch.nn.BCELoss()
+    # Initialize generator and discriminator
+    generator = Generator(100, (1, 28, 28))
+    discriminator = Discriminator((1, 28, 28))
+    adversarial_loss = torch.nn.BCELoss()
 
-# Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=2e-4, betas=(0.5, 0.999))
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.999))
+    # Optimizers
+    optimizer_G = torch.optim.Adam(generator.parameters(), lr=2e-4, betas=(0.5, 0.999))
+    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=2e-4, betas=(0.5, 0.999))
 
-for epoch in range(opt.n_epochs):
-    for i, (imgs, _) in enumerate(dataloader):
-        # Adversarial ground truths
-        valid = torch.FloatTensor(imgs.size(0), 1).fill_(1.0)
-        fake = torch.FloatTensor(imgs.size(0), 1).fill_(0.0)
-
-        # Train generator to fool the discriminator
-        optimizer_G.zero_grad()
-        z = torch.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
-        gen_imgs = generator(z)
-        g_loss = adversarial_loss(discriminator(gen_imgs), valid)
-        g_loss.backward()
-        optimizer_G.step()
-
-        # Train Discriminator to classify real from generated samples
-        optimizer_D.zero_grad()
-        real_loss = adversarial_loss(discriminator(imgs), valid)
-        fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
-        d_loss = real_loss + fake_loss
-        d_loss.backward()
-        optimizer_D.step()
-
-        print(
-            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-            % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
-        )
-
-        batches_done = epoch * len(dataloader) + i
-        if batches_done % opt.sample_interval == 0:
-            save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
+    for epoch in range(opt.n_epochs):
+        for i, (imgs, _) in enumerate(dataloader):
+            # Adversarial ground truths
+            valid = torch.FloatTensor(imgs.size(0), 1).fill_(1.0)
+            fake = torch.FloatTensor(imgs.size(0), 1).fill_(0.0)
+    
+            # Train generator to fool the discriminator
+            optimizer_G.zero_grad()
+            z = torch.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim)))
+            gen_imgs = generator(z)
+            g_loss = adversarial_loss(discriminator(gen_imgs), valid)
+            g_loss.backward()
+            optimizer_G.step()
+    
+            # Train Discriminator to classify real from generated samples
+            optimizer_D.zero_grad()
+            real_loss = adversarial_loss(discriminator(imgs), valid)
+            fake_loss = adversarial_loss(discriminator(gen_imgs.detach()), fake)
+            d_loss = real_loss + fake_loss
+            d_loss.backward()
+            optimizer_D.step()
+    
+            print(
+                "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
+                % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
+            )
+    
+            batches_done = epoch * len(dataloader) + i
+            if batches_done % opt.sample_interval == 0:
+                save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)

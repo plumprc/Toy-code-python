@@ -18,6 +18,7 @@ def hierarchical_contrastive_loss(z1, z2, alpha=0.5, temporal_unit=0):
         if alpha != 0:
             loss += alpha * instance_contrastive_loss(z1, z2)
         d += 1
+    
     return loss / d
 
 def instance_contrastive_loss(z1, z2):
@@ -33,6 +34,7 @@ def instance_contrastive_loss(z1, z2):
     
     i = torch.arange(B, device=z1.device)
     loss = (logits[:, i, B + i - 1].mean() + logits[:, B + i, i].mean()) / 2
+    
     return loss
 
 def temporal_contrastive_loss(z1, z2):
@@ -47,4 +49,14 @@ def temporal_contrastive_loss(z1, z2):
     
     t = torch.arange(T, device=z1.device)
     loss = (logits[:, t, T + t - 1].mean() + logits[:, T + t, t].mean()) / 2
+    
     return loss
+
+
+if __name__ == '__main__':
+    view_1 = torch.rand(32, 96, 7)
+    view_2 = torch.rand(32, 96, 7)
+    temporal_loss = temporal_contrastive_loss(view_1, view_2)
+    instance_loss = instance_contrastive_loss(view_1, view_2)
+    loss = hierarchical_contrastive_loss(view_1, view_2)
+    print(temporal_loss, instance_loss, loss)
