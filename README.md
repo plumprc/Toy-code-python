@@ -1,6 +1,8 @@
 # Toy-code-python
 ## Models
 * `Autoformer.py`: [Autoformer](https://arxiv.org/abs/2106.13008)
+* `contextcluster.py`: [Context Clusters](https://arxiv.org/abs/2303.01494)
+* `convmixer.py`: [ConvMixer](https://arxiv.org/abs/2201.09792)
 * `cpc.py`: [Contrastive Predictive Coding](https://arxiv.org/abs/1807.03748)
 * `cvae.py`: Conditional VAE
 * `fnet.py`: [FNet](https://arxiv.org/abs/2105.03824)
