@@ -5,6 +5,7 @@
 * `convmixer.py`: [ConvMixer](https://arxiv.org/abs/2201.09792)
 * `cpc.py`: [Contrastive Predictive Coding](https://arxiv.org/abs/1807.03748)
 * `cvae.py`: Conditional VAE
+* `deepvib.py`: [Variational Information Bottleneck](https://arxiv.org/abs/1612.00410)
 * `fnet.py`: [FNet](https://arxiv.org/abs/2105.03824)
 * `gan.py`: [Generative Adversarial Nets](https://arxiv.org/abs/1406.2661)
 * `losses.py`: various loss functions
